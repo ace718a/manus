@@ -11,8 +11,8 @@ include = ["index.html", "assets_rent/**/*"]
 # KV 네임스페이스 바인딩
 [[kv_namespaces]]
 binding = "CAR_DB"
-id = "YOUR_KV_NAMESPACE_ID"
-preview_id = "YOUR_KV_NAMESPACE_PREVIEW_ID"
+id = "7988f4f4331d4a2385819947b54fa062"
+preview_id = "7988f4f4331d4a2385819947b54fa062"
 
 # 라우팅
 [env.production]
@@ -22,4 +22,4 @@ routes = [
 
 [[env.production.kv_namespaces]]
 binding = "CAR_DB"
-id = "YOUR_KV_NAMESPACE_ID"
+id = "7988f4f4331d4a2385819947b54fa062"
