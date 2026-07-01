@@ -42,7 +42,7 @@ function popup() {
 <link rel="stylesheet" href="assets_rent/customBoard.css">
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
-<link href="assets_rent/css2" rel="stylesheet">
+<link href="assets_rent/css2.css" rel="stylesheet">
 
 <link rel="icon" href="https://carchelin.com/img/favicon.ico">
 
@@ -1576,39 +1576,45 @@ $(document).ready (function () {
 
 <script>
 $(document).ready(function() {
-    // 폼 전송 통합 처리 (중복 방지 및 유효성 검사)
-    $('form').off('submit').on('submit', function(e) {
+    // 모든 폼의 전송을 가로채서 단일화된 AJAX로 처리
+    $(document).on('submit', 'form', function(e) {
         e.preventDefault();
-        var f = $(this);
-        
-        // 1. 유효성 검사
-        var name = f.find("[name='name']").val();
-        var hp2 = f.find("[name='hp2']").val();
-        var hp3 = f.find("[name='hp3']").val();
-        var item2 = f.find("[name='item2']").val() || f.find("[name='hope_model']").val();
-        var agree = f.find("[name='agree1']").is(":checked");
+        var $f = $(this);
+        var $btn = $f.find('button[type="submit"], input[type="submit"]');
+
+        // 중복 클릭 방지
+        if ($btn.prop('disabled')) return false;
+
+        // 유효성 검사 (필드명 통합 처리)
+        var name = $f.find("[name='name'], [name='wr_name']").val();
+        var hp2 = $f.find("[name='hp2']").val();
+        var hp3 = $f.find("[name='hp3']").val();
+        var phone = $f.find("[name='wr_subject']").val();
+        var model = $f.find("[name='item2'], [name='wr_content'], [name='hope_model']").val();
+        var agree = $f.find("[name='agree1']").is(":checked");
 
         if (!name) { alert("이름을 입력해주세요."); return false; }
-        if (!hp2 || !hp3) { alert("연락처를 입력해주세요."); return false; }
-        if (!item2) { alert("희망모델을 입력해주세요."); return false; }
+        if ((!hp2 || !hp3) && !phone) { alert("연락처를 입력해주세요."); return false; }
+        if (!model) { alert("희망모델을 입력해주세요."); return false; }
         if (!agree) { alert("개인정보 수집 및 이용에 동의해주세요."); return false; }
 
-        // 2. 중복 클릭 방지 (버튼 비활성화)
-        var $btn = f.find('button, input[type="submit"]');
-        if ($btn.prop('disabled')) return false;
         $btn.prop('disabled', true).css('opacity', '0.5');
 
-        // 3. AJAX 전송
         $.ajax({
             url: '/api/submit',
             type: 'POST',
-            data: f.serialize(),
+            data: $f.serialize(),
+            dataType: 'json',
             success: function(res) {
-                $('#customModal').fadeIn();
-                f[0].reset();
+                if (res.success) {
+                    $('#customModal').fadeIn();
+                    $f[0].reset();
+                } else {
+                    alert('신청 중 오류가 발생했습니다: ' + (res.error || '알 수 없는 오류'));
+                }
             },
             error: function() {
-                alert('신청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                alert('서버와 통신 중 오류가 발생했습니다.');
             },
             complete: function() {
                 $btn.prop('disabled', false).css('opacity', '1');
