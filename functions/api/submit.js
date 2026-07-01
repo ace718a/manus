@@ -1,7 +1,7 @@
 export async function onRequestPost(context) {
     const { request, env } = context;
     
-    // 1. 데이터 파싱
+    // 데이터 파싱
     let data = {};
     const contentType = request.headers.get("content-type") || "";
     if (contentType.includes("application/json")) {
@@ -17,24 +17,22 @@ export async function onRequestPost(context) {
     const phone = `010-${hp2}-${hp3}`;
     const model = data.item2 || data.wr_content || "미지정";
     const source = data.source || "unknown";
-    const type = data.wr_3 || "기본"; // 장기렌트/리스
+    const type = data.wr_3 || "기본";
     const ip = request.headers.get("cf-connecting-ip") || "0.0.0.0";
 
-    // [중복 방지 로직] 
-    // 동일 IP와 연락처로 30초 이내에 다시 신청이 들어오면 차단 (KV 저장소 활용)
+    // 1. 중복 방지 (KV)
     if (env.CAR_DB) {
-        const lockKey = `lock:${phone}:${ip}`;
+        const lockKey = `lock:${phone}`;
         const isLocked = await env.CAR_DB.get(lockKey);
         if (isLocked) {
-            return new Response(JSON.stringify({ res: false, msg: "이미 신청이 처리 중입니다. 잠시만 기다려주세요." }), {
+            return new Response(JSON.stringify({ res: false, msg: "이미 처리 중" }), {
                 headers: { "Content-Type": "application/json" }
             });
         }
-        // 30초 동안 락(Lock) 설정
-        await env.CAR_DB.put(lockKey, "true", { expirationTtl: 30 });
+        await env.CAR_DB.put(lockKey, "true", { expirationTtl: 20 });
     }
 
-    // [최우선 순위] 2. 리플알바 서버로 전송
+    // 2. 리플알바 전송 (최우선)
     const replyAlbaData = new URLSearchParams();
     replyAlbaData.append("name", name);
     replyAlbaData.append("hp1", "010");
@@ -43,9 +41,8 @@ export async function onRequestPost(context) {
     replyAlbaData.append("item2", model);
     replyAlbaData.append("code", "T2KCXF94DF");
 
-    let replyAlbaSuccess = false;
     try {
-        const response = await fetch("https://replyalba.co.kr/proc/submit.frm.php", {
+        await fetch("https://replyalba.co.kr/proc/submit.frm.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -53,16 +50,15 @@ export async function onRequestPost(context) {
             },
             body: replyAlbaData.toString()
         });
-        if (response.ok) replyAlbaSuccess = true;
     } catch (e) {
-        console.error("ReplyAlba 전송 실패:", e);
+        console.error("ReplyAlba error");
     }
 
-    // 3. Supabase DB 저장 (백업)
-    // 환경변수 체크 (SUPABASE_URL, SUPABASE_KEY)
+    // 3. Supabase 저장 (강화된 로직)
     if (env.SUPABASE_URL && env.SUPABASE_KEY) {
+        const supabaseUrl = env.SUPABASE_URL.endsWith('/') ? env.SUPABASE_URL : env.SUPABASE_URL + '/';
         try {
-            await fetch(`${env.SUPABASE_URL}/rest/v1/quotations`, {
+            const sbRes = await fetch(`${supabaseUrl}rest/v1/quotations`, {
                 method: "POST",
                 headers: {
                     "apikey": env.SUPABASE_KEY,
@@ -79,17 +75,16 @@ export async function onRequestPost(context) {
                     ip: ip
                 })
             });
+            if (!sbRes.ok) {
+                const errText = await sbRes.text();
+                console.error("Supabase Error:", errText);
+            }
         } catch (e) {
-            console.error("Supabase 저장 실패:", e);
+            console.error("Supabase fetch error");
         }
     }
 
-    // 4. 결과 응답
-    return new Response(JSON.stringify({ 
-        res: true, 
-        msg: "성공", 
-        replyAlba: replyAlbaSuccess 
-    }), {
+    return new Response(JSON.stringify({ res: true }), {
         headers: { "Content-Type": "application/json" }
     });
 }
