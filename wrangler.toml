@@ -1,25 +1,12 @@
-name = "carchelin"
-main = "functions/index.ts"
+name = "carchelin-v10"
 compatibility_date = "2024-01-01"
-type = "service"
 
-# 정적 파일 제공
-[site]
-bucket = "."
-include = ["index.html", "assets_rent/**/*"]
+[vars]
+SUPABASE_URL = "https://zwcrlmqcvsmedxsmouhl.supabase.co"
+SUPABASE_KEY = "sb_publishable_Cr9Z6shwC2ObUsfkAg32mQ_a5Yncnag"
+REPLY_ALBA_CODE = "T2KCXF94DF"
 
-# KV 네임스페이스 바인딩
+# KV 네임스페이스 바인딩 (중복 방지 락 기능을 위해 필요)
 [[kv_namespaces]]
-binding = "CAR_DB"
-id = "YOUR_KV_NAMESPACE_ID"
-preview_id = "YOUR_KV_NAMESPACE_PREVIEW_ID"
-
-# 라우팅
-[env.production]
-routes = [
-  { pattern = "example.com/api/*", zone_name = "example.com" }
-]
-
-[[env.production.kv_namespaces]]
 binding = "CAR_DB"
 id = "YOUR_KV_NAMESPACE_ID"
