@@ -1,0 +1,25 @@
+name = "carchelin"
+main = "functions/index.ts"
+compatibility_date = "2024-01-01"
+type = "service"
+
+# 정적 파일 제공
+[site]
+bucket = "."
+include = ["index.html", "assets_rent/**/*"]
+
+# KV 네임스페이스 바인딩
+[[kv_namespaces]]
+binding = "CAR_DB"
+id = "YOUR_KV_NAMESPACE_ID"
+preview_id = "YOUR_KV_NAMESPACE_PREVIEW_ID"
+
+# 라우팅
+[env.production]
+routes = [
+  { pattern = "example.com/api/*", zone_name = "example.com" }
+]
+
+[[env.production.kv_namespaces]]
+binding = "CAR_DB"
+id = "YOUR_KV_NAMESPACE_ID"
