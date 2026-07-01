@@ -25,7 +25,7 @@ export async function onRequestPost(context) {
     // [Task A] Supabase 저장
     if (env.SUPABASE_URL && env.SUPABASE_KEY) {
         tasks.push(
-            fetch(`${env.SUPABASE_URL}/rest/v1/quotations`, {
+            fetch(`${env.SUPABASE_URL}/rest/v1/quotation`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
