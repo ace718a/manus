@@ -1,12 +1,16 @@
 name = "carchelin"
-main = "functions/index.ts"
+# Cloudflare Pages Functions 방식 사용 시 main 설정은 필요하지 않거나 적절히 조정되어야 합니다.
+# 만약 일반 Worker로 사용한다면 아래와 같이 설정합니다.
+# main = "functions/api/submit.js"
 compatibility_date = "2024-01-01"
 type = "service"
 
 # 정적 파일 제공
+# Cloudflare Pages로 배포 시 [site] 섹션 대신 Pages 대시보드 설정을 따릅니다.
+# 일반 Worker 사이트 배포 시에만 사용합니다.
 [site]
 bucket = "."
-include = ["index.html", "assets_rent/**/*"]
+include = ["index.html", "assets_rent/**/*", "functions/**/*"]
 
 # KV 네임스페이스 바인딩
 [[kv_namespaces]]

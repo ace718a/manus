@@ -1,7 +1,7 @@
 export async function onRequestPost(context) {
     const { request, env } = context;
     
-    // 1. 데이터 파싱 (에러 방지용 try-catch)
+    // 1. 데이터 파싱
     let data = {};
     try {
         const contentType = request.headers.get("content-type") || "";
@@ -24,7 +24,13 @@ export async function onRequestPost(context) {
     const type = data.wr_3 || "기본";
     const ip = request.headers.get("cf-connecting-ip") || "0.0.0.0";
 
-    // [핵심 1] 중복 전송 방지 (KV 60초 규칙 준수 및 에러 무시)
+    // [시간 처리] 한국 시간(KST) 생성
+    const now = new Date();
+    const kstOffset = 9 * 60 * 60 * 1000; // 9시간 밀리초
+    const kstDate = new Date(now.getTime() + kstOffset);
+    const formattedTime = kstDate.toISOString().replace('T', ' ').substring(0, 19);
+
+    // [핵심 1] 중복 전송 방지 (KV 60초 규칙 준수)
     if (env.CAR_DB) {
         try {
             const lockKey = `lock:${phone}`;
@@ -34,15 +40,13 @@ export async function onRequestPost(context) {
                     headers: { "Content-Type": "application/json" }
                 });
             }
-            // Cloudflare KV 규칙: expirationTtl은 최소 60초여야 함
             await env.CAR_DB.put(lockKey, "true", { expirationTtl: 60 });
         } catch (kvError) {
             console.error("KV Error (ignored):", kvError);
-            // KV에 문제가 생겨도 전송은 계속 진행합니다.
         }
     }
 
-    // [핵심 2] 리플알바 전송 (최우선)
+    // [핵심 2] 리플알바 전송
     const replyAlbaData = new URLSearchParams();
     replyAlbaData.append("name", name);
     replyAlbaData.append("hp1", "010");
@@ -64,7 +68,7 @@ export async function onRequestPost(context) {
         console.error("ReplyAlba Error:", albaError);
     }
 
-    // [핵심 3] Supabase 저장
+    // [핵심 3] Supabase 저장 (한국 시간 포함)
     if (env.SUPABASE_URL && env.SUPABASE_KEY) {
         try {
             const sbUrl = env.SUPABASE_URL.replace(/\/$/, "");
@@ -82,7 +86,8 @@ export async function onRequestPost(context) {
                     model: model,
                     type: type,
                     source: source,
-                    ip: ip
+                    ip: ip,
+                    created_at: formattedTime // 명시적으로 한국 시간 저장
                 })
             });
         } catch (sbError) {
