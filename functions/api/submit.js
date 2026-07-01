@@ -15,40 +15,42 @@ export async function onRequestPost(context) {
         console.error("Data parsing error:", e);
     }
 
-    const name = data.name || data.wr_name || "이름없음";
+    const name = data.name || data.wr_name || "";
     const hp2 = data.hp2 || "";
     const hp3 = data.hp3 || "";
-    const phone = `010-${hp2}-${hp3}`;
+    const phone = hp2 && hp3 ? `010-${hp2}-${hp3}` : "";
     const model = data.item2 || data.wr_content || "미지정";
     const source = data.source || "unknown";
     const type = data.wr_3 || "기본";
     const ip = request.headers.get("cf-connecting-ip") || "0.0.0.0";
 
-    // [시간 처리] 한국 시간(KST) 생성
-    const now = new Date();
-    const kstOffset = 9 * 60 * 60 * 1000; // 9시간 밀리초
-    const kstDate = new Date(now.getTime() + kstOffset);
-    const formattedTime = kstDate.toISOString().replace('T', ' ').substring(0, 19);
-
-    // [핵심 1] 중복 전송 방지 (KV 60초 규칙 준수)
-    if (env.CAR_DB) {
+    // [핵심 1] 중복 전송 방지 (정보가 있을 때만 작동)
+    // 번호와 이름이 모두 같을 때만 중복으로 간주하도록 키 조합 개선
+    if (env.CAR_DB && phone && name) {
         try {
-            const lockKey = `lock:${phone}`;
+            const lockKey = `lock:${name}:${phone}`;
             const isLocked = await env.CAR_DB.get(lockKey);
             if (isLocked) {
                 return new Response(JSON.stringify({ res: true, msg: "이미 처리 중입니다." }), {
                     headers: { "Content-Type": "application/json" }
                 });
             }
-            await env.CAR_DB.put(lockKey, "true", { expirationTtl: 60 });
+            // 30초 정도로 차단 시간 단축 (연속 신청 허용 범위 확대)
+            await env.CAR_DB.put(lockKey, "true", { expirationTtl: 30 });
         } catch (kvError) {
             console.error("KV Error (ignored):", kvError);
         }
     }
 
+    // [시간 처리] 한국 시간(KST) 생성
+    const now = new Date();
+    const kstOffset = 9 * 60 * 60 * 1000;
+    const kstDate = new Date(now.getTime() + kstOffset);
+    const formattedTime = kstDate.toISOString().replace('T', ' ').substring(0, 19);
+
     // [핵심 2] 리플알바 전송
     const replyAlbaData = new URLSearchParams();
-    replyAlbaData.append("name", name);
+    replyAlbaData.append("name", name || "이름없음");
     replyAlbaData.append("hp1", "010");
     replyAlbaData.append("hp2", hp2);
     replyAlbaData.append("hp3", hp3);
@@ -68,7 +70,7 @@ export async function onRequestPost(context) {
         console.error("ReplyAlba Error:", albaError);
     }
 
-    // [핵심 3] Supabase 저장 (한국 시간 포함)
+    // [핵심 3] Supabase 저장
     if (env.SUPABASE_URL && env.SUPABASE_KEY) {
         try {
             const sbUrl = env.SUPABASE_URL.replace(/\/$/, "");
@@ -81,13 +83,13 @@ export async function onRequestPost(context) {
                     "Prefer": "return=minimal"
                 },
                 body: JSON.stringify({
-                    name: name,
-                    phone: phone,
+                    name: name || "이름없음",
+                    phone: phone || "010-0000-0000",
                     model: model,
                     type: type,
                     source: source,
                     ip: ip,
-                    created_at: formattedTime // 명시적으로 한국 시간 저장
+                    created_at: formattedTime
                 })
             });
         } catch (sbError) {
