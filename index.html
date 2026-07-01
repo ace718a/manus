@@ -1576,48 +1576,46 @@ $(document).ready (function () {
 
 <script>
 $(document).ready(function() {
-    // 모든 폼의 기본 동작 중단 및 AJAX 처리
-    $('form').on('submit', function(e) {
+    // 폼 전송 통합 처리 (중복 방지 및 유효성 검사)
+    $('form').off('submit').on('submit', function(e) {
         e.preventDefault();
-        var $form = $(this);
-        var formData = $form.serialize();
+        var f = $(this);
         
+        // 1. 유효성 검사
+        var name = f.find("[name='name']").val();
+        var hp2 = f.find("[name='hp2']").val();
+        var hp3 = f.find("[name='hp3']").val();
+        var item2 = f.find("[name='item2']").val() || f.find("[name='hope_model']").val();
+        var agree = f.find("[name='agree1']").is(":checked");
+
+        if (!name) { alert("이름을 입력해주세요."); return false; }
+        if (!hp2 || !hp3) { alert("연락처를 입력해주세요."); return false; }
+        if (!item2) { alert("희망모델을 입력해주세요."); return false; }
+        if (!agree) { alert("개인정보 수집 및 이용에 동의해주세요."); return false; }
+
+        // 2. 중복 클릭 방지 (버튼 비활성화)
+        var $btn = f.find('button, input[type="submit"]');
+        if ($btn.prop('disabled')) return false;
+        $btn.prop('disabled', true).css('opacity', '0.5');
+
+        // 3. AJAX 전송
         $.ajax({
             url: '/api/submit',
             type: 'POST',
-            data: formData,
+            data: f.serialize(),
             success: function(res) {
                 $('#customModal').fadeIn();
-                $form[0].reset();
+                f[0].reset();
             },
             error: function() {
                 alert('신청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).css('opacity', '1');
             }
         });
         return false;
     });
-
-    // 신청 버튼 클릭 시 폼 제출 트리거
-    $('.btn_submit, #submitBtn, button:contains("신청"), button:contains("견적")').on('click', function(e) {
-        $(this).closest('form').submit();
-    });
 });
 </script>
-</body></html>$(document).ready(function() {
-    $("form").on("submit", function(e) {
-        var f = $(this);
-        var name = f.find("[name='name']").val();
-        var hp2 = f.find("[name='hp2']").val();
-        var hp3 = f.find("[name='hp3']").val();
-        var item2 = f.find("[name='item2']").val();
-        var agree = f.find("[name='agree1']").prop("checked");
-
-        if (!name) { alert("이름을 입력해주세요."); e.preventDefault(); return false; }
-        if (!hp2 || !hp3) { alert("연락처를 입력해주세요."); e.preventDefault(); return false; }
-        if (!item2) { alert("희망모델을 입력해주세요."); e.preventDefault(); return false; }
-        if (!agree) { alert("개인정보 수집 및 이용에 동의해주세요."); e.preventDefault(); return false; }
-        
-        // 표준 전송 허용
-        return true;
-    });
-});
+</body></html>

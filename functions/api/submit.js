@@ -1,66 +1,21 @@
 export async function onRequestPost(context) {
     const { request, env } = context;
-    
-    // 1. 폼 데이터 파싱
-    let data;
-    const contentType = request.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-        data = await request.json();
-    } else {
-        const formData = await request.formData();
-        data = Object.fromEntries(formData.entries());
-    }
+    const formData = await request.formData();
+    const data = Object.fromEntries(formData.entries());
 
-    const name = data.name || '';
-    const hp1 = data.hp1 || '010';
-    const hp2 = data.hp2 || '';
-    const hp3 = data.hp3 || '';
-    const item2 = data.item2 || data.hope_model || '';
-    const agree1 = 'on'; // 리플알바 고정값
-    const code = env.REPLY_ALBA_CODE || 'T2KCXF94DF';
-    const ip = request.headers.get('cf-connecting-ip') || '0.0.0.0';
-
-    // 2. Supabase 저장 (테이블 이름: quotation)
-    if (env.SUPABASE_URL && env.SUPABASE_KEY) {
-        try {
-            await fetch(`${env.SUPABASE_URL}/rest/v1/quotation`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': env.SUPABASE_KEY,
-                    'Authorization': `Bearer ${env.SUPABASE_KEY}`,
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify({
-                    name: name,
-                    phone: `${hp1}-${hp2}-${hp3}`,
-                    model: item2,
-                    ip: ip
-                })
-            });
-        } catch (e) {
-            console.error('Supabase Error:', e);
-        }
-    }
-
-    // 3. 리플알바 서버로 전송 (성공했던 로직 유지)
+    // 1. 리플알바 서버로 전송
     const replyAlbaData = new URLSearchParams();
-    replyAlbaData.append('adData', '_frm');
-    replyAlbaData.append('name', name);
-    replyAlbaData.append('hp1', hp1);
-    replyAlbaData.append('hp2', hp2);
-    replyAlbaData.append('hp3', hp3);
-    replyAlbaData.append('item2', item2);
-    replyAlbaData.append('agree1', agree1);
-    replyAlbaData.append('code', code);
+    for (const [key, value] of Object.entries(data)) {
+        replyAlbaData.append(key, value);
+    }
+    if (!data.code) replyAlbaData.append('code', 'T2KCXF94DF');
 
     try {
         await fetch('https://replyalba.co.kr/proc/submit.frm.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Referer': 'https://replyalba.co.kr/intros/_frm/index.php?code=' + code,
-                'Origin': 'https://replyalba.co.kr'
+                'Referer': 'https://replyalba.co.kr/'
             },
             body: replyAlbaData.toString()
         });
@@ -68,21 +23,19 @@ export async function onRequestPost(context) {
         console.error('ReplyAlba error:', e);
     }
 
-    // 4. 성공 응답
-    return new Response(JSON.stringify({ success: true, res: true, msg: "상담신청이 완료되었습니다." }), {
-        headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-        }
-    });
-}
+    // 2. 관리자용 KV 저장 (Cloudflare KV 네임스페이스 'CAR_DB' 필요)
+    if (env.CAR_DB) {
+        const id = Date.now().toString();
+        const submission = {
+            time: new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+            name: data.name,
+            phone: `010-${data.hp2}-${data.hp3}`,
+            model: data.item2 || data.hope_model || '미지정'
+        };
+        await env.CAR_DB.put(id, JSON.stringify(submission));
+    }
 
-export async function onRequestOptions() {
-    return new Response(null, {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type'
-        }
+    return new Response(JSON.stringify({ res: true, msg: "성공" }), {
+        headers: { 'Content-Type': 'application/json' }
     });
 }
