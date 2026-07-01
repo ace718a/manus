@@ -1,7 +1,7 @@
 export async function onRequestPost(context) {
     const { request, env } = context;
     
-    // 폼 데이터 파싱
+    // 1. 폼 데이터 파싱
     let data;
     const contentType = request.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
@@ -12,14 +12,18 @@ export async function onRequestPost(context) {
     }
 
     const name = data.name || '';
-    const phone = `010-${data.hp2 || ''}-${data.hp3 || ''}`;
-    const model = data.item2 || data.hope_model || '미지정';
+    const hp1 = data.hp1 || '010';
+    const hp2 = data.hp2 || '';
+    const hp3 = data.hp3 || '';
+    const item2 = data.item2 || data.hope_model || '';
+    const agree1 = data.agree1 ? 'on' : 'on'; // 동의 체크박스 값 보정
+    const code = env.REPLY_ALBA_CODE || 'T2KCXF94DF';
     const ip = request.headers.get('cf-connecting-ip') || '0.0.0.0';
 
-    // 1. Supabase 저장 로직 추가
+    // 2. Supabase 저장 (성공 확인됨)
     if (env.SUPABASE_URL && env.SUPABASE_KEY) {
         try {
-            const supabaseResponse = await fetch(`${env.SUPABASE_URL}/rest/v1/quotations`, {
+            await fetch(`${env.SUPABASE_URL}/rest/v1/quotations`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -29,45 +33,48 @@ export async function onRequestPost(context) {
                 },
                 body: JSON.stringify({
                     name: name,
-                    phone: phone,
-                    model: model,
+                    phone: `${hp1}-${hp2}-${hp3}`,
+                    model: item2,
                     ip: ip
                 })
             });
-
-            if (!supabaseResponse.ok) {
-                const errorText = await supabaseResponse.text();
-                console.error('Supabase Error Details:', errorText);
-            }
         } catch (e) {
-            console.error('Supabase Connection Error:', e);
+            console.error('Supabase Error:', e);
         }
-    } else {
-        console.error('Supabase Environment Variables Missing');
     }
 
-    // 2. 리플알바 서버로 전송 (기존 로직 유지)
+    // 3. 리플알바 서버로 전송 (필드명 및 인코딩 최적화)
+    // 리플알바는 application/x-www-form-urlencoded 형식을 기대함
     const replyAlbaData = new URLSearchParams();
-    for (const [key, value] of Object.entries(data)) {
-        replyAlbaData.append(key, value);
-    }
-    const albaCode = env.REPLY_ALBA_CODE || 'T2KCXF94DF';
-    if (!data.code) replyAlbaData.append('code', albaCode);
+    replyAlbaData.append('adData', '_frm');
+    replyAlbaData.append('name', name);
+    replyAlbaData.append('hp1', hp1);
+    replyAlbaData.append('hp2', hp2);
+    replyAlbaData.append('hp3', hp3);
+    replyAlbaData.append('item2', item2);
+    replyAlbaData.append('agree1', agree1);
+    replyAlbaData.append('code', code);
 
     try {
-        await fetch('https://replyalba.co.kr/proc/submit.frm.php', {
+        const response = await fetch('https://replyalba.co.kr/proc/submit.frm.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Referer': request.url
+                'Referer': 'https://replyalba.co.kr/intros/_frm/index.php?code=' + code,
+                'Origin': 'https://replyalba.co.kr'
             },
             body: replyAlbaData.toString()
         });
+
+        // 전송 결과 로그 (Cloudflare Workers 로그에서 확인 가능)
+        const resText = await response.text();
+        console.log('ReplyAlba Response:', resText);
+
     } catch (e) {
         console.error('ReplyAlba error:', e);
     }
 
-    // 3. 응답 반환
+    // 4. 사용자에게 성공 응답 반환
     return new Response(JSON.stringify({ success: true, res: true, msg: "상담신청이 완료되었습니다." }), {
         headers: { 
             'Content-Type': 'application/json',
@@ -76,7 +83,6 @@ export async function onRequestPost(context) {
     });
 }
 
-// CORS 처리를 위한 OPTIONS 메서드 지원
 export async function onRequestOptions() {
     return new Response(null, {
         headers: {
