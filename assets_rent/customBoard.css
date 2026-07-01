@@ -1,0 +1,249 @@
+:root {
+    --board-active-color: #E18317;
+}   
+
+/* 관리자 메뉴 */
+.menuBox{ display: flex; align-items: center; justify-content: flex-end; padding: 20px 0; }
+.menuBox .menuList{ display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-size: 14px; color: #4D4D4D; flex-wrap: wrap; }
+.menuBox .menuList > li{ position: relative;  }
+.menuBox .menuList .item{ display: flex; gap: 3px; padding: 2px 5px; border-radius: 5px; border: none; }
+.menuBox .menuList .subMenu{ 
+    position: absolute; right: 0; top: calc(100% + 12px); padding: 0px 8px; min-width: calc(100% + 20px); border: 1px solid #E6E6E6; text-align: center; z-index: 9; 
+    opacity: 0; visibility: hidden; background-color: #fff;  min-width: 200px;
+}
+.menuBox .menuList .subMenu.show{ opacity: 1; visibility: visible; }
+.menuBox .menuList .subMenu .item{ display: block; padding: 6px 2px; color: #666; position: relative; z-index: 1; font-size: 0.9em; background-color: #fff; width: 100%; border: none; }
+.menuBox .menuList .subMenu .item2{ display: block; padding: 6px 2px; color: #666; position: relative; z-index: 1; font-size: 0.9em; }
+.menuBox .menuList .subMenu > li{ position: relative; }
+.menuBox .menuList .subMenu > li + li{ border-top: 1px solid #E6E6E6; }
+.menuBox .menuList .subMenu::before{ 
+    content:''; display: block; width: 10px; height: 10px; background-color: #fff; border: 1px solid #E6E6E6; 
+    border-right: none; border-bottom: none; position: absolute; transform: rotate(45deg); top: -5px; right: 10px;
+}
+
+.menuBox .menuList .searchBox{ padding: 10px 0; }
+.menuBox .menuList .searchBox .searchList{ padding: 5px; border-radius: 5px; border: 1px solid #E6E6E6; width: 100%; }
+.menuBox .menuList .searchBox .iptBox{ margin-top: 10px; position: relative; }
+.menuBox .menuList .searchBox .iptBox .ipt{ padding: 5px; border-radius: 5px; border: 1px solid #E6E6E6; padding-right: 30px; }
+.menuBox .menuList .searchBox .iptBox .searchBtn{ position: absolute; right: 0; top: 0; height: 100%; background-color: unset; border: none; display: flex; align-items: center; justify-content: center; padding: 0 10px; }
+
+@media screen and (max-width: 500px) {
+    .menuBox .menuList{ font-size: 12px; }
+}
+
+/* 게시판 공통 */
+.boardArti{ padding: 100px 0; }
+
+/* 게시판 타이틀 */
+.boardArti .boardBanner{ margin-bottom: 50px; text-align: center; }
+.boardArti .boardBanner .t1{ color: #666; font-size: 20px;  }
+.boardArti .boardBanner .t2{ font-size: 32px; font-weight: 700; color: #1A1A1A;  }
+
+@media screen and (max-width: 1250px) {
+    .boardArti .boardBanner .t1{ font-size: 16px;  }
+    .boardArti .boardBanner .t2{ font-size: 24px;  }
+}
+@media screen and (max-width: 500px) {
+    .boardArti .boardBanner .t1{ font-size: 14px;  }
+    .boardArti .boardBanner .t2{ font-size: 20px;  }
+}
+
+/* 게시판 리스트 */
+.basicBoardArti .basicList{ border-top: 1px solid #E5E5E5; color: #666666; overflow: hidden; font-size: 15px; }
+.basicBoardArti .basicList > li{ border-bottom: 1px solid #E5E5E5; }
+.basicBoardArti .basicList > li .item{ display: flex; padding: 10px 0; }
+.basicBoardArti .basicList > li .item > div{ text-overflow: ellipsis; white-space: nowrap; padding: 0 5px; }
+.basicBoardArti .basicList > li .item .center{ text-align: center; }
+.basicBoardArti .basicList > li .item .chk{ flex-shrink: 0; width: 22px; }
+.basicBoardArti .basicList > li .item .number{ flex-shrink: 0; width: 50px; overflow: hidden; }
+.basicBoardArti .basicList > li .item .number.on{ color: #E18317; }
+.basicBoardArti .basicList > li .item .title{ justify-content: center; flex-grow: 1; overflow: hidden; gap: 2px; display: flex; gap: 2px;  }
+.basicBoardArti .basicList > li .item .title .iconWrap{ display: flex; align-items: center; gap: 2px; align-items: center; }
+.basicBoardArti .basicList > li .item .title a{ width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.basicBoardArti .basicList > li .item .title .reple{ font-size: 0.8em; padding: 0 4px; background-color: #666666; border-radius: 4px; color: #fff;  }
+.basicBoardArti .basicList > li .item .writer{ width: 100px; flex-shrink: 0; overflow: hidden; }
+.basicBoardArti .basicList > li .item .hit{ width: 100px; flex-shrink: 0; overflow: hidden; }
+.basicBoardArti .basicList > li .item .date{ width: 100px; flex-shrink: 0; overflow: hidden; }
+
+@media screen and (max-width: 600px) {
+    .basicBoardArti .basicList > li .item{ flex-direction: column; }
+    .basicBoardArti .basicList > li.boardTitle .item > div{ display: none; }
+    .basicBoardArti .basicList > li.boardTitle .item > div.chk{ display: block; width: 100%; }
+    .basicBoardArti .basicList > li.boardTitle .item > div.chk .allchk::after{ content:'전체선택'; padding-left: 2px; font-size: 0.9em; }
+    .basicBoardArti .basicList > li .item .center{ text-align: left; }
+    .basicBoardArti .basicList > li .item .number{ display: none; }
+    .basicBoardArti .basicList > li .item .writer{ width: 100%; font-size: 0.9em; color: #7F7F7F; }
+    .basicBoardArti .basicList > li .item .writer::before{ content:'글쓴이 : '; }
+    .basicBoardArti .basicList > li .item .hit{ width: 100%; font-size: 0.9em; color: #7F7F7F; }
+    .basicBoardArti .basicList > li .item .hit::before{ content:'조회수 : '; }
+    .basicBoardArti .basicList > li .item .date{ width: 100%; font-size: 0.9em; color: #7F7F7F; }
+    .basicBoardArti .basicList > li .item .date::before{ content:'작성일 : '; }
+}
+
+/* 게시판 글쓰기 */
+.boardArti .infoBoxWrap .infoBoxList{ display: flex; flex-wrap: wrap; border-top: 1px solid #E6E6E6; }
+.boardArti .infoBoxWrap .infoBoxList > li{ width: calc(100% / 3); border-bottom: 1px solid #E6E6E6; }
+.boardArti .infoBoxWrap .infoBoxList > li.full{ width: 100%; }
+.boardArti .infoBoxWrap .infoBoxList > li.half{ width: calc(100% / 2); }
+.boardArti .infoBoxWrap .infoBoxList > li .infoBox{display: flex; height: 100%; }
+.boardArti .infoBoxWrap .infoBoxList > li .infoBox .label{ display: flex; align-items: center; justify-content: center; height: auto; background-color: #F7F7F7; padding: 16px; font-size: 13px; width: 120px; flex-shrink: 0; }
+.boardArti .infoBoxWrap .infoBoxList > li .infoBox .txtBox{ padding: 5px 16px; flex-grow: 1; font-size: 14px; display: flex; align-items: center; }
+.boardArti .infoBoxWrap .infoBoxList > li .infoBox .txtBox .ipt{ width: 100%; padding: 10px 10px; border: 1px solid #E6E6E6; border-radius: 4px; }
+.boardArti .infoBoxWrap .infoBoxList > li .infoBox .txtBox select.ipt{ max-width: 280px; }
+
+
+@media screen and (max-width: 900px) {
+    .boardWriteArti{ font-size: 14px; }
+    .boardArti .infoBoxWrap .infoBoxList > li{ width: 100%; }
+    .boardArti .infoBoxWrap .infoBoxList > li.half{ width: 100%; }
+    .boardArti .infoBoxWrap .infoBoxList > li .infoBox .label{ width: 80px; padding: 16px 10px;  }
+}
+
+.boardWriteArti .dhtmlBox{ margin-top: 50px; }
+
+/* 글쓰기 링크 */
+.boardWriteArti .addArti{ margin-top: 50px; display: flex; flex-direction: column; gap: 16px; }
+.boardWriteArti .addArti .addWrap .tag{ font-size: 0.9em; margin-bottom: 5px; }
+.boardWriteArti .addArti .addWrap .ipt{ padding: 16px; border-radius: 8px; border: 1px solid #E6E6E6; font-size: 14px; width: 100%; padding-left: 50px; background-repeat: no-repeat; background-position: left 16px center;  }
+.boardWriteArti .addArti .addWrap .ipt.link{  background-image: url('../img/boardImg/linkwrite.png'); }
+.boardWriteArti .addArti .addWrap .ipt.file{  background-image: url('../img/boardImg/folder.png'); }
+
+.boardWriteArti .addArti .addWrap .delBox{ display: flex; justify-content: flex-end; gap: 5px; margin-top: 10px; color: #7F7F7F; font-size: 0.8em; }
+
+@media screen and (max-width: 500px) {
+    .boardWriteArti .addArti .addWrap .ipt{ padding: 12px 10px 12px 35px; border-radius: 4px; }
+    .boardWriteArti .addArti .addWrap .ipt.link{ background-size: 20px; background-position: left 8px center; }
+    .boardWriteArti .addArti .addWrap .ipt.file{ background-size: 20px; background-position: left 8px center; }
+}
+
+.boardWriteArti .btnWrap{ margin-top: 50px; display: flex; gap: 5px; justify-content: flex-end; }
+.boardWriteArti .btnWrap .boardBtn{ display: block; padding: 10px 15px; border: 1px solid #CCC; text-align: center; border-radius: 4px; font-size: 15px; }
+.boardWriteArti .btnWrap .boardBtn.submit{ background-color: var(--board-active-color); color: #fff; border-color: var(--board-active-color); }
+
+@media screen and (max-width: 500px) {
+    .boardWriteArti .btnWrap .boardBtn{ font-size: 14px; }
+}
+
+
+/* 게시판 상세페이지 */
+.boardViewArti .viewContent img{ max-width: 100%; display: inline-block; }
+.boardViewArti .viewAddArti{ display: flex; flex-direction: column; gap: 10px; margin-top: 50px; }
+.boardViewArti .viewAddArti .item{ padding: 16px; border-radius: 8px; border: 1px solid #E6E6E6; background-color: #fff; font-size: 14px; padding-left: 50px; background-repeat: no-repeat; background-position: center left 16px; }
+.boardViewArti .viewAddArti .item.file{ background-image: url('../img/boardImg/folder.png'); }
+.boardViewArti .viewAddArti .item.link{ background-image: url('../img/boardImg/linkwrite.png'); }
+.boardViewArti .viewAddArti .item .t2{ font-size: 0.9em; color: #999; }
+
+@media screen and (max-width: 500px) {
+    .boardViewArti .viewAddArti .item{ padding: 10px; padding-left: 50px; }
+}
+
+
+.boardViewArti .commentArti{ margin-top: 50px; }
+.boardViewArti .commentArti .commentBtn{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.boardViewArti .commentArti .commentBtn .count b{ color: var(--board-active-color); }
+.boardViewArti .commentArti .commentBtn .toggleBtn{ background-color: transparent; border: none; display: flex; align-items: center; gap: 2px; font-size: 12px; }
+.boardViewArti .commentArti .commentBtn .toggleBtn .open{ display: none; }
+.boardViewArti .commentArti .commentBtn .toggleBtn.show .open{ display: block; }
+.boardViewArti .commentArti .commentBtn .toggleBtn.show .close{ display: none; }
+.boardViewArti .commentArti .commentBtn .toggleBtn.show .icon{ transform: rotate(180deg); }
+
+.boardViewArti .prevNextArti{ margin-top: 50px; overflow: hidden; border-top: 1px solid #E5E5E5; font-size: 14px; }
+.boardViewArti .prevNextArti .item{ display: flex; overflow: hidden; border-bottom: 1px solid #E5E5E5; }
+.boardViewArti .prevNextArti .item .label{ padding: 16px; width: 120px; background-color: #F7F7F7; font-size: 0.9em; flex-shrink: 0; }
+.boardViewArti .prevNextArti .item .titleBox{ padding: 16px; display: flex; align-items: center; overflow: hidden;  }
+.boardViewArti .prevNextArti .item .titleBox a{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } 
+
+@media screen and (max-width: 500px) {
+    .boardViewArti .prevNextArti .item .label{ padding: 10px; }
+    .boardViewArti .prevNextArti .item .label{ width: 80px; }
+    .boardViewArti .prevNextArti .item .titleBox{ padding: 10px; }
+}
+.boardViewArti .commentArti .commentBox.reply{ margin-left: 30px; }
+.boardViewArti .commentArti .commentBox .commentTitle{ display: flex; justify-content: space-between; background-color: #FAFAFA; padding: 16px; font-size: 14px; }
+.boardViewArti .commentArti .commentBox .commentTitle .leftBox{ display: flex; gap: 5px; align-items: center; }
+.boardViewArti .commentArti .commentBox .commentTitle .leftBox .date{ font-size: 0.9em; color: #999; }
+.boardViewArti .commentArti .commentBox .commentTitle .btnWrap{ position: relative; }
+.boardViewArti .commentArti .commentBox .commentTitle .btnWrap .subMenu{  display: none; opacity: 0; font-size: 14px; position: absolute; top: 100%; right: 0; min-width: 80px; background-color: #fff; border: 1px solid #E6E6E6; text-align: center; padding:5px; }
+.boardViewArti .commentArti .commentBox .commentTitle .btnWrap .subMenu.show{ display: block; opacity: 1; }
+.boardViewArti .commentArti .commentBox .commentTitle .btnWrap .subMenu .item{ display: block; width: 100%; background-color: transparent; border: none; padding: 5px; font-size: 0.9em;  border-bottom: 1px solid #E6E6E6; }
+.boardViewArti .commentArti .commentBox .commentTitle .btnWrap .subMenu >li:last-child .item{ border-bottom: unset; }
+.boardViewArti .commentArti .commentBox .commentTitle .menuBtn{ position: relative; border: unset; background-color: transparent; }
+.boardViewArti .commentArti .commentBox .commentText{ padding: 16px; color: #333;  }
+
+@media screen and (max-width: 500px) {
+    .boardViewArti .commentArti .commentBox .commentText{ font-size: 14px; }
+}
+
+.boardViewArti .commentArti .commentWriteBox{ margin-top: 20px; }
+.boardViewArti .commentArti .commentWriteBox .commentWrite{ width: 100%; height: 200px; resize: none; border: 1px solid #E6E6E6; padding: 10px; border-radius: 8px; }
+.boardViewArti .commentArti .commentWriteBox .commentInfo{ display: flex; gap: 4px; flex-wrap: wrap; }
+.boardViewArti .commentArti .commentWriteBox .commentInfo .ipt{ padding: 7px; border-radius: 4px; border: 1px solid #E6E6E6; font-size: 0.9em; }
+.boardViewArti .commentArti .commentWriteBox .autoBox{ margin-top: 14px; }
+.boardViewArti .commentArti .commentWriteBox .btnWrap{ margin-top: 14px; display: flex; justify-content: flex-end; gap: 5px; }
+.boardViewArti .commentArti .commentWriteBox .btnWrap .submitBtn{ background-color: var(--board-active-color); padding: 10px 20px; border-radius: 4px; font-size: 14px; border: unset; color: #fff; }
+
+@media screen and (max-width: 500px) {
+    .boardViewArti .commentArti .commentWriteBox .commentWrite{ font-size: 14px; }
+}
+
+
+
+
+.formList{ display: flex; flex-wrap: wrap; width: calc(100% + 10px); margin-left: -5px; }
+.formList > li{ padding: 10px 5px; width: 100%; }
+.formList > li.half{ width: calc(100% / 2); }
+.formList.three > li.half{ width: calc(100% / 3); }
+.formList .label span{ color: #EB5757; }
+.formList .label span.grayInfo{ font-size: 0.8em; color: #7F7F7F; }
+.formList .red{ color: #EB5757; }
+.formList .iptBox{ margin-top: 5px; }
+.ipt{ padding: 10px; border: 1px solid #ECECEC; border-radius: 0; width: 100%; }
+textarea.ipt{ resize: none; height: 170px; }
+.ipt::placeholder{ color: rgba(119, 119, 119, 0.2); }
+.formList .ipt + .red{ margin-top: 5px; display: block; }
+.formList .scrollDiv{ border: 1px solid #E4E4E4; padding: 10px; height: 200px; overflow-y: scroll; color: #7F7F7F; line-height: 1.5em; }
+input[type="file"].ipt{ border-radius: 8px; padding: 15px 15px 15px 45px; background-image: url('../img/boardImg/folder.png'); background-repeat: no-repeat; background-position: left 10px center; }
+textarea.ipt{ resize: none; height: 170px; }
+.formList .iptBox.btnIpt{ display: flex; gap: 4px; }
+.formList .iptBox .grayBtn{ flex-shrink: 0; padding: 10px 20px; background: #222; border: none; border-radius: 0; color: #fff; }
+
+.formList .iptBox.radioIpt{ margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+.formList .iptBox.radioIpt label{ cursor: pointer; display: flex; align-items: center; padding-right: 10px; }
+.formList .iptBox.radioIpt label input{ display: none; }
+.formList .iptBox.radioIpt label input + .text{ display: flex; gap: 4px; align-items: center; }
+.formList .iptBox.radioIpt label input + .text::before{ content:''; display: block; width: 20px; height: 20px; border: 1px solid #E4E4E4;  }
+.formList .iptBox.radioIpt label input:checked + .text::before{ background-image: url('../img/common/checkbox_icon.png'); background-size: %; background-repeat: no-repeat; background-position: center; background-color: #FC504F; }
+
+.agreeCheckDiv{ margin-top: 10px; display: flex; justify-content: flex-start; color: #7F7F7F; }
+.agreeCheckDiv label input[type="checkbox"]{ display: none; }
+.agreeCheckDiv label input[type="checkbox"] + .textBox{ display: flex; align-items: flex-start; gap: 4px; }
+.agreeCheckDiv label input[type="checkbox"] + .textBox::before{ flex-shrink: 0; content:''; display: block; flex-shrink: 0; border: 1px solid #7f7f7f; width:16px; height: 16px;  }
+.agreeCheckDiv label input[type="checkbox"]:checked + .textBox::before{ background-color: #fff; background-image: url('../img/common/checkbox_icon.png'); background-size: 100%; background-repeat: no-repeat; background-position: center; }
+.agreeCheckDiv label .black{ color: #070707; cursor: pointer; }
+input[type="file"].ipt label input[type="checkbox"]{ display: none;  }
+.checkIpt{ margin-top: 10px; display: flex; justify-content: flex-start; }
+.checkIpt .black{ color: #070707; }
+.checkIpt.fileDel{ color: #7f7f7f; font-size: 14px; }
+.checkIpt input[type="checkbox"]{ display: none; }
+.checkIpt input[type="checkbox"] + .text{ color: #7f7f7f; cursor: pointer; position: relative; padding-left: 25px; padding-right: 10px; }
+.checkIpt input[type="checkbox"] + .text::before{ content:''; display: block; width: 18px; height: 18px; border: 1px solid #dedede; position: absolute; left: 0; margin-top: 2px; }
+.checkIpt.fileDel input[type="checkbox"] + .text{ padding-left: 20px; padding-right: 0; }
+.checkIpt.fileDel input[type="checkbox"] + .text::before{ margin-top: 0; width: 15px; height: 15px; }
+.checkIpt input[type="checkbox"]:checked + .text::before{ background-image: url('../img/common/checkbox_icon.png'); background-size: 100%; background-repeat: no-repeat; background-position: center; }
+
+@media screen and (max-width: 900px) {
+    .formList.three > li.half{ width: calc(100% / 2); }
+}
+@media screen and (max-width: 650px) {
+    .formList{ font-size: 14px; }
+    .formList > li.half{ width: 100%; }
+    .formList.three > li.half{ width: 100%; }
+    .formList .iptBox.radioIpt label input + .text::before{ width: 18px; height: 18px; }
+    .agreeCheckDiv{ font-size: 14px; }
+    .agreeCheckDiv label input[type="checkbox"] + .textBox::before{ width: 14px; height: 14px; }
+    .checkIpt.fileDel{ font-size: 13px; }
+
+    .checkIpt input[type="checkbox"] + .text{ padding-left: 20px; }
+    .checkIpt input[type="checkbox"] + .text::before{ width: 16px; height: 16px; }
+    .checkIpt{ margin-top: 5px; }
+}
