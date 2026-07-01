@@ -10,7 +10,7 @@ export async function onRequestGet(context) {
 
     let submissions = [];
 
-    // Supabase에서 데이터 조회 (KV 대신 DB 우선)
+    // Supabase에서 데이터 조회
     if (env.SUPABASE_URL && env.SUPABASE_KEY) {
         try {
             const sbUrl = env.SUPABASE_URL.replace(/\/$/, "");
@@ -30,31 +30,23 @@ export async function onRequestGet(context) {
         }
     }
 
-    // 만약 Supabase에 데이터가 없고 KV에 있다면 (백업용)
-    if (submissions.length === 0 && env.CAR_DB) {
-        try {
-            const list = await env.CAR_DB.list();
-            for (const key of list.keys) {
-                if (key.name.startsWith('lock:')) continue;
-                const val = await env.CAR_DB.get(key.name);
-                if (val) submissions.push(JSON.parse(val));
-            }
-            submissions.sort((a, b) => new Date(b.created_at || b.time) - new Date(a.created_at || a.time));
-        } catch (kvError) {
-            console.error("KV Fetch Error:", kvError);
-        }
-    }
-
-    const rows = submissions.map(s => `
+    const rows = submissions.map(s => {
+        const albaResult = s.alba_result || "N/A";
+        const albaColor = albaResult === "success" ? "#2ecc71" : (albaResult === "N/A" ? "#95a5a6" : "#e74c3c");
+        
+        return `
         <tr>
-            <td style="padding:10px; border:1px solid #ccc;">${s.created_at || s.time || '-'}</td>
+            <td style="padding:10px; border:1px solid #ccc;">${s.created_at || '-'}</td>
             <td style="padding:10px; border:1px solid #ccc;">${s.name}</td>
             <td style="padding:10px; border:1px solid #ccc;">${s.phone}</td>
             <td style="padding:10px; border:1px solid #ccc;">${s.model}</td>
+            <td style="padding:10px; border:1px solid #ccc; text-align:center;">
+                <span style="background:${albaColor}; color:#fff; padding:2px 6px; border-radius:4px; font-size:11px;">${albaResult}</span>
+            </td>
             <td style="padding:10px; border:1px solid #ccc;">${s.ip || '-'}</td>
             <td style="padding:10px; border:1px solid #ccc;">${s.source || '-'}</td>
         </tr>
-    `).join('');
+    `}).join('');
 
     const html = `
         <html>
@@ -64,18 +56,21 @@ export async function onRequestGet(context) {
             <title>카슐랭 관리자 페이지</title>
             <style>
                 body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; background: #f4f7f6; }
-                .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                h1 { color: #1a2a6c; border-bottom: 2px solid #1a2a6c; padding-bottom: 10px; }
+                .container { max-width: 1100px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                h1 { color: #1a2a6c; border-bottom: 2px solid #1a2a6c; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+                .refresh-btn { font-size: 14px; background: #1a2a6c; color: #fff; padding: 8px 15px; border-radius: 5px; text-decoration: none; }
                 table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th { background: #1a2a6c; color: #fff; padding: 12px; text-align: left; }
-                td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+                th { background: #1a2a6c; color: #fff; padding: 12px; text-align: left; font-size: 14px; }
+                td { padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; }
                 tr:hover { background: #f9f9f9; }
-                .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; background: #eee; }
             </style>
         </head>
         <body>
             <div class="container">
-                <h1>📊 신청 내역 실시간 현황 (${submissions.length}건)</h1>
+                <h1>
+                    📊 신청 내역 실시간 현황 (${submissions.length}건)
+                    <a href="javascript:location.reload()" class="refresh-btn">새로고침</a>
+                </h1>
                 <table>
                     <thead>
                         <tr>
@@ -83,13 +78,16 @@ export async function onRequestGet(context) {
                             <th>이름</th>
                             <th>연락처</th>
                             <th>모델</th>
+                            <th>리플알바</th>
                             <th>IP</th>
                             <th>유입</th>
                         </tr>
                     </thead>
-                    <tbody>${rows || '<tr><td colspan="6" style="text-align:center;">내역이 없습니다.</td></tr>'}</tbody>
+                    <tbody>${rows || '<tr><td colspan="7" style="text-align:center;">내역이 없습니다.</td></tr>'}</tbody>
                 </table>
-                <p style="color:gray; font-size:12px; margin-top:20px;">* 본 페이지는 Supabase 실시간 데이터를 표시합니다.</p>
+                <div style="margin-top:20px; padding:15px; background:#f9f9f9; border-radius:5px; font-size:12px; color:#666;">
+                    <strong>[안내]</strong> 리플알바 상태가 <span style="color:#e74c3c; font-weight:bold;">failed</span> 또는 <span style="color:#e74c3c; font-weight:bold;">error</span>인 경우, 3회 재시도 후에도 실패한 건입니다. 이 경우 수동 접수가 필요할 수 있습니다.
+                </div>
             </div>
         </body>
         </html>

@@ -24,8 +24,7 @@ export async function onRequestPost(context) {
     const type = data.wr_3 || "기본";
     const ip = request.headers.get("cf-connecting-ip") || "0.0.0.0";
 
-    // [핵심 1] 중복 전송 방지 (정보가 있을 때만 작동)
-    // 번호와 이름이 모두 같을 때만 중복으로 간주하도록 키 조합 개선
+    // [핵심 1] 중복 전송 방지
     if (env.CAR_DB && phone && name) {
         try {
             const lockKey = `lock:${name}:${phone}`;
@@ -35,10 +34,43 @@ export async function onRequestPost(context) {
                     headers: { "Content-Type": "application/json" }
                 });
             }
-            // 30초 정도로 차단 시간 단축 (연속 신청 허용 범위 확대)
             await env.CAR_DB.put(lockKey, "true", { expirationTtl: 30 });
         } catch (kvError) {
-            console.error("KV Error (ignored):", kvError);
+            console.error("KV Error:", kvError);
+        }
+    }
+
+    // [핵심 2] 리플알바 전송 (스마트 재시도 로직 추가)
+    let albaStatus = "pending";
+    const replyAlbaData = new URLSearchParams();
+    replyAlbaData.append("name", name || "이름없음");
+    replyAlbaData.append("hp1", "010");
+    replyAlbaData.append("hp2", hp2);
+    replyAlbaData.append("hp3", hp3);
+    replyAlbaData.append("item2", model);
+    replyAlbaData.append("code", "T2KCXF94DF");
+
+    for (let i = 0; i < 3; i++) {
+        try {
+            const albaResponse = await fetch("https://replyalba.co.kr/proc/submit.frm.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Referer": "https://replyalba.co.kr/"
+                },
+                body: replyAlbaData.toString()
+            });
+
+            if (albaResponse.ok) {
+                albaStatus = "success";
+                break; // 성공 시 재시도 중단
+            } else {
+                albaStatus = `failed(HTTP:${albaResponse.status})`;
+            }
+        } catch (albaError) {
+            albaStatus = `error(${albaError.message})`;
+            // 마지막 시도가 아니면 1초 대기 후 재시도
+            if (i < 2) await new Promise(resolve => setTimeout(resolve, 1000));
         }
     }
 
@@ -48,29 +80,7 @@ export async function onRequestPost(context) {
     const kstDate = new Date(now.getTime() + kstOffset);
     const formattedTime = kstDate.toISOString().replace('T', ' ').substring(0, 19);
 
-    // [핵심 2] 리플알바 전송
-    const replyAlbaData = new URLSearchParams();
-    replyAlbaData.append("name", name || "이름없음");
-    replyAlbaData.append("hp1", "010");
-    replyAlbaData.append("hp2", hp2);
-    replyAlbaData.append("hp3", hp3);
-    replyAlbaData.append("item2", model);
-    replyAlbaData.append("code", "T2KCXF94DF");
-
-    try {
-        await fetch("https://replyalba.co.kr/proc/submit.frm.php", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Referer": "https://replyalba.co.kr/"
-            },
-            body: replyAlbaData.toString()
-        });
-    } catch (albaError) {
-        console.error("ReplyAlba Error:", albaError);
-    }
-
-    // [핵심 3] Supabase 저장
+    // [핵심 3] Supabase 저장 (리플알바 전송 결과 포함)
     if (env.SUPABASE_URL && env.SUPABASE_KEY) {
         try {
             const sbUrl = env.SUPABASE_URL.replace(/\/$/, "");
@@ -89,7 +99,8 @@ export async function onRequestPost(context) {
                     type: type,
                     source: source,
                     ip: ip,
-                    created_at: formattedTime
+                    created_at: formattedTime,
+                    alba_result: albaStatus // 전송 결과 기록 (success/error 등)
                 })
             });
         } catch (sbError) {
@@ -97,7 +108,7 @@ export async function onRequestPost(context) {
         }
     }
 
-    return new Response(JSON.stringify({ res: true }), {
+    return new Response(JSON.stringify({ res: true, alba: albaStatus }), {
         headers: { "Content-Type": "application/json" }
     });
 }
